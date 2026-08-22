@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diana Museum — Edición Limitada</title>
+    <style>
+        /* === VARIABLES & RESET === */
+        @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Nunito:wght@400;600;700&family=Playfair+Display:ital,wght@0,600;0,800;1,600&display=swap');
+
+        :root {
+            --bg-cream: #FDFBF7;
+            --text-main: #4A4A4A;
+            --text-light: #7A7A7A;
+            
+            /* Paleta Pastel Viva */
+            --color-pink: #FFE4E1;
+            --color-lavender: #E6E6FA;
+            --color-coral: #FFDAB9;
+            --color-yellow: #FFFACD;
+            --color-sage: #E1EEDD;
+            --color-blue: #E0F7FA;
+            --color-rainbow: linear-gradient(135deg, #FFE4E1, #E6E6FA, #E0F7FA, #FFFACD);
+            
+            --font-serif: 'Playfair Display', serif;
+            --font-sans: 'Nunito', sans-serif;
+            --font-hand: 'Caveat', cursive;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background-color: var(--bg-cream);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        h1, h2, h3, .serif { font-family: var(--font-serif); }
+        .handwritten { font-family: var(--font-hand); }
+
+        /* === ELEMENTOS DECORATIVOS (SCRAPBOOK) === */
+        .washi-tape {
+            position: absolute;
+            height: 25px;
+            background-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            z-index: 5;
+            opacity: 0.8;
+            mix-blend-mode: multiply;
+        }
+        .washi-pink { background-color: rgba(255, 182, 193, 0.5); }
+        .washi-yellow { background-color: rgba(255, 235, 153, 0.5); }
+        .washi-blue { background-color: rgba(173, 216, 230, 0.5); }
+
+        .sticker {
+            position: absolute;
+            font-size: 2rem;
+            filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.1));
+            z-index: 10;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(3deg); }
+        }
+
+        /* === PANTALLA 1: LOADING (NOTEPAD) === */
+        #loading-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100vh;
+            background: #FFF9E6;
+            background-image: repeating-linear-gradient(transparent, transparent 39px, #FFB6C1 39px, #FFB6C1 40px);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 4rem 2rem 2rem 2rem;
+            z-index: 9999;
+            transition: opacity 1s ease;
+            overflow-y: auto;
+        }
+
+        .loading-container {
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .terminal-line {
+            opacity: 0;
+            margin-bottom: 1.2rem;
+            font-size: 1.8rem;
+            font-family: var(--font-hand);
+            color: #333;
+            transform: rotate(-1deg);
+        }
+
+        #enter-btn {
+            opacity: 0;
+            padding: 10px 30px;
+            background: var(--color-coral);
+            border: 2px dashed #D2A679;
+            border-radius: 15px;
+            color: #333;
+            font-family: var(--font-hand);
+            font-size: 1.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            box-shadow: 2px 4px 10px rgba(0,0,0,0.1);
+        }
+
+        #enter-btn.visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: rotate(2deg);
+        }
+        #enter-btn:hover { transform: scale(1.1) rotate(-1deg); }
+
+        /* === REPRODUCTOR DE MÚSICA === */
+        .music-container {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 9998;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #music-btn {
+            background: var(--color-coral);
+            border: 2px dashed #D2A679;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        #music-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .music-label {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: 2px dashed #D2A679;
+            font-family: var(--font-hand);
+            font-size: 1.2rem;
+            color: #333;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            animation: fadeInOut 2s infinite alternate;
+        }
+
+        /* === CONTENIDO PRINCIPAL === */
+        #main-content {
+            display: none;
+            opacity: 0;
+            transition: opacity 1.5s ease;
+        }
+
+        .section-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 6rem 2rem;
+            position: relative;
+        }
+
+        /* === PANTALLA 2: PORTADA (CON FONDO PALACIO) === */
+        .hero {
+            /* Imagen de fondo semitransparente gracias al linear-gradient */
+            background-image: linear-gradient(rgba(253, 251, 247, 0.75), rgba(253, 251, 247, 0.85)), url('palacioamanecer.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            
+            text-align: center;
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .hero h1 {
+            font-size: clamp(3.5rem, 10vw, 7rem);
+            color: #DDA0DD;
+            text-shadow: 3px 3px 0px #FFF, 5px 5px 0px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+            z-index: 2;
+        }
+
+        .hero .subtitle {
+            font-size: 1.2rem;
+            font-family: var(--font-hand);
+            color: var(--text-main);
+            font-weight: bold;
+            max-width: 600px;
+            margin-bottom: 3rem;
+            font-size: 1.8rem;
+            z-index: 2;
+        }
+
+        .hero-poster {
+            position: relative;
+            width: 280px;
+            height: 340px;
+            margin: 0 auto 3rem;
+            background: #FFF;
+            padding: 15px 15px 15px 15px; 
+            box-shadow: 5px 15px 30px rgba(0,0,0,0.1);
+            transform: rotate(-3deg);
+            transition: transform 0.4s ease;
+            cursor: pointer;
+            z-index: 2;
+            border: 1px solid #eee;
+        }
+        .hero-poster:hover { transform: rotate(2deg) scale(1.05); }
+        
+        .hero-poster img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+            background: var(--color-pink);
+        }
+
+        .hero-washi {
+            width: 120px;
+            top: -12px;
+            transform: translateX(-50%) rotate(-4deg);
+        }
+
+        .quote {
+            font-style: italic;
+            font-family: var(--font-serif);
+            font-size: 1.3rem;
+            color: #4A4A4A;
+            max-width: 650px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.85);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px dashed #ccc;
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        /* === TÍTULOS DE SECCIÓN MÁS BONITOS === */
+        .section-title {
+            text-align: center;
+            font-size: 4rem; /* Más grande */
+            font-family: var(--font-hand); /* Tipografía más bonita */
+            margin-bottom: 4rem;
+            color: #4A4A4A;
+            position: relative;
+            display: inline-block;
+            left: 50%;
+            transform: translateX(-50%);
+            text-shadow: 1px 1px 0px rgba(0,0,0,0.1);
+        }
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 5px; left: -5%;
+            width: 110%; height: 12px;
+            background: var(--color-yellow);
+            z-index: -1;
+            border-radius: 10px;
+            opacity: 0.7;
+        }
+
+        /* === PANTALLA 3: LAS DIFERENTES DIANAS === */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 3rem;
+            padding: 2rem 0;
+        }
+
+        .card {
+            background: #FFF;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 3px 8px 20px rgba(0,0,0,0.06);
+            text-align: center;
+            position: relative;
+            opacity: 0;
+            transform: translateY(30px);
+            border: 2px solid transparent;
+        }
+
+        .card-princess { background: var(--color-pink); border-color: #FFC0CB; transform: rotate(-1deg); }
+        .card-academic { background: var(--color-blue); border-color: #B0E0E6; transform: rotate(2deg); }
+        .card-quilla { background: var(--color-sage); border-color: #C1E1C1; transform: rotate(-2deg); }
+        .card-friend { background: var(--color-coral); border-color: #FFCBA4; transform: rotate(1deg); }
+        .card-experiencias { background: var(--color-yellow); border-color: #F0E68C; transform: rotate(-3deg); }
+        .card-boss { background: var(--color-rainbow); transform: rotate(0deg); }
+
+        .card.fade-in { opacity: 1; transition: opacity 0.8s ease, transform 0.8s ease; }
+        .card:hover { transform: translateY(-10px) rotate(0deg); z-index: 10; box-shadow: 5px 15px 25px rgba(0,0,0,0.1); }
+
+        .card-washi { width: 80px; top: -10px; }
+
+        /* Ajuste: Imágenes de cards más grandes */
+        .card-img-placeholder {
+            width: 180px; /* Antes 100px */
+            height: 180px; /* Antes 100px */
+            border-radius: 50%;
+            background: rgba(255,255,255,0.6);
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px dashed rgba(255,255,255,0.6);
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        
+        .card-img-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Ajuste: Fuente más bonita para títulos de cards */
+        .card h3 {
+            margin-bottom: 0.8rem;
+            font-size: 1.8rem;
+            font-family: var(--font-serif);
+            letter-spacing: 0.5px;
+            color: #333;
+        }
+        .card p { font-size: 1.05rem; color: var(--text-main); }
+
+        /* === PANTALLA 4: COSAS QUE NO TE DIGO TANTO === */
+        .emotional-section {
+            background: #F4F1EA;
+            padding: 6rem 2rem;
+            position: relative;
+            background-image: radial-gradient(#dcd5c9 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .notes-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .emotional-note {
+            background: #FFF;
+            padding: 2rem;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 2px 4px 15px rgba(0,0,0,0.05);
+            font-family: var(--font-hand);
+            font-size: 1.8rem;
+            color: #333;
+            position: relative;
+            opacity: 0;
+            transform: translateY(20px);
+            background-image: repeating-linear-gradient(transparent, transparent 29px, #E0E0E0 29px, #E0E0E0 30px);
+            line-height: 30px;
+        }
+        
+        .emotional-note:nth-child(odd) { transform: rotate(-2deg); }
+        .emotional-note:nth-child(even) { transform: rotate(2deg); background-color: var(--color-yellow); }
+        
+        .emotional-note.fade-in { opacity: 1; transition: opacity 1s ease, transform 1s ease; }
+
+        /* === PANTALLA 5: GALERÍA === */
+        .gallery-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+            padding: 3rem 0;
+        }
+
+        .polaroid {
+            background: #fff;
+            padding: 12px 12px 50px 12px;
+            box-shadow: 3px 6px 20px rgba(0,0,0,0.1);
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            width: 260px;
+        }
+
+        .polaroid:nth-child(1) { transform: rotate(-5deg) translateY(10px); }
+        .polaroid:nth-child(2) { transform: rotate(3deg); }
+        .polaroid:nth-child(3) { transform: rotate(-2deg) translateY(-15px); }
+        .polaroid:nth-child(4) { transform: rotate(6deg); }
+        .polaroid:nth-child(5) { transform: rotate(-4deg); }
+
+        .polaroid:hover { transform: scale(1.1) rotate(0deg); z-index: 20; }
+
+        .polaroid img {
+            width: 100%;
+            height: 230px;
+            object-fit: cover;
+            background: #f0f0f0;
+            border: 1px solid #eee;
+        }
+
+        .polaroid-caption {
+            position: absolute;
+            bottom: 12px; left: 0; width: 100%;
+            text-align: center;
+            font-family: var(--font-hand);
+            font-size: 1.4rem;
+            color: var(--text-main);
+        }
+        
+        .polaroid-tape { width: 70px; top: -10px; }
+
+        /* Lightbox Modal */
+        .modal {
+            display: none; position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.95);
+            z-index: 10000;
+            justify-content: center; align-items: center; flex-direction: column;
+        }
+        .modal img {
+            max-width: 90%; max-height: 75vh;
+            border: 15px solid white; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            transform: rotate(-1deg);
+        }
+        .modal-caption {
+            font-family: var(--font-hand); font-size: 2.5rem; color: #333; margin-top: 1rem;
+        }
+        .close-modal {
+            position: absolute; top: 20px; right: 30px;
+            font-size: 3rem; cursor: pointer; color: #333;
+        }
+
+        /* === PANTALLA 6: QUILLA EVOLUTION === */
+        .evolution-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 3rem;
+        }
+
+        /* Ajuste: Cards más grandes */
+        .trading-card {
+            width: 250px; /* Antes 200px */
+            background: #fff;
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            text-align: center;
+            border: 4px solid var(--color-blue);
+            opacity: 0;
+            transform: scale(0.9);
+        }
+
+        .trading-card.fade-in {
+            opacity: 1; transform: scale(1); transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Ajuste: Imágenes de Quilla más grandes */
+        .tc-image {
+            height: 200px; /* Antes 120px */
+            background: #f9f9f9;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 12px;
+            overflow: hidden; 
+        }
+
+        .tc-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Esto evitará que se vean cortadas a lo ancho/largo extraño */
+            object-position: top;
+        }
+        
+        .tc-title { font-family: var(--font-serif); font-size: 1.2rem; margin-bottom: 5px; color: #333; font-weight: bold;}
+        .tc-desc { font-size: 0.95rem; color: var(--text-light); }
+
+        /* === PANTALLA 7: FINAL (CON FONDO TERRAZANOCHE) === */
+        .footer {
+            /* Fondo de terraza con capa oscura transparente para legibilidad */
+            background-image: linear-gradient(rgba(15, 20, 35, 0.65), rgba(15, 20, 35, 0.85)), url('terrazanoche.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            
+            text-align: center;
+            padding: 8rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .footer p {
+            font-size: 2rem;
+            font-family: var(--font-hand);
+            max-width: 800px;
+            margin: 0 auto 1.5rem;
+            color: #FDFBF7; /* Letra clara para resaltar sobre lo oscuro */
+            text-shadow: 1px 1px 5px rgba(0,0,0,0.5);
+        }
+
+        .footer h2 {
+            font-size: clamp(3rem, 8vw, 5rem);
+            color: #FFDAB9; /* Coral claro que hace buen contraste */
+            margin: 3rem 0;
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+        }
+        
+        .final-photo {
+            margin: 3rem auto;
+            text-align: center;
+            position: relative;
+            z-index: 5;
+        }
+        
+        /* Ajuste: Foto final sin marco blanco */
+        .final-photo img {
+            max-width: 350px;
+            border-radius: 15px; /* Bordes redondeados sutiles */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transform: rotate(2deg);
+        }
+
+        .footer .signature {
+            font-size: 2.5rem;
+            color: #E6E6FA; /* Lavanda claro */
+            margin-top: 4rem;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+        }
+
+        /* Estrellas flotantes finales */
+        .star {
+            position: absolute;
+            font-size: 1.5rem;
+            color: #FFD700;
+            animation: floatUp 5s linear infinite;
+            opacity: 0;
+            text-shadow: 0 0 10px rgba(255,215,0,0.5);
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(100px) rotate(0deg); opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translateY(-200px) rotate(360deg); opacity: 0; }
+        }
+
+        /* === EASTER EGGS === */
+        .secret-btn {
+            width: 20px; height: 20px;
+            background: transparent; border: none;
+            position: absolute; bottom: 20px; right: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- AUDIO DE FONDO -->
+    <audio id="bg-music" src="CancionFondo.mp3" loop></audio>
+
+    <!-- PANTALLA 1: LOADING (NOTEPAD STYLE) -->
+    <div id="loading-screen">
+        <div class="loading-container">
+            <div class="terminal-line" data-delay="300">✍️ Inicializando archivo: DIANA.exe...</div>
+            <div class="terminal-line" data-delay="1000">✨ Analizando recuerdos... [OK]</div>
+            <div class="terminal-line" data-delay="1800">😂 Analizando nivel de chacota... [SOBRECARGA]</div>
+            <div class="terminal-line" data-delay="2600">📚 Analizando pendientes... [ERROR: DEMASIADOS]</div>
+            <div class="terminal-line" data-delay="3400">🎀 Analizando obsesión estética... [100%]</div>
+            <div class="terminal-line" data-delay="4200">🫶 Analizando cariño hacia sus amigos... [CAPACIDAD MÁXIMA]</div>
+            <div class="terminal-line" data-delay="5200" style="color: #d46a6a; margin-top: 1rem; font-size: 2.2rem; text-align: center; font-weight: bold;">Resultado: DIANA ❤️</div>
+            
+            <div style="text-align: center; padding-top: 2.5rem; padding-bottom: 2rem;">
+                <button id="enter-btn">Entrar al museo →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div id="main-content">
+        
+        <!-- CONTENEDOR MÚSICA -->
+        <div class="music-container">
+            <button id="music-btn" title="Reproducir/Pausar música">🎵</button>
+            <div class="music-label">Stand by Me — Ben E. King</div>
+        </div>
+
+        <!-- PANTALLA 2: PORTADA -->
+        <header class="hero">
+            <div class="sticker" style="top: 10%; left: 10%;">🌸</div>
+            <div class="sticker" style="top: 20%; right: 15%; font-size: 3rem;">✨</div>
+            <div class="sticker" style="bottom: 8%; left: 8%; font-size: 2.5rem; z-index: 1;">💌</div>
+            
+            <h1 class="scroll-anim">DIANA MUSEUM</h1>
+            <p class="subtitle scroll-anim">Edición limitada · Una colección de momentos, personajes y cosas que te hacen única.</p>
+            
+            <div class="hero-poster scroll-anim" id="hero-img">
+                <div class="washi-tape hero-washi washi-pink"></div>
+                <img src="6.png" alt="Diana">
+            </div>
+            
+            <p class="quote scroll-anim">"Para celebrar a una persona bastante difícil de resumir: Una pequeña colección de recuerdos, historias y versiones de Diana. Después de una exhaustiva investigación, llegamos a una conclusión: ella merece su propio museo."</p>
+        </header>
+
+        <!-- PANTALLA 3: LAS DIFERENTES DIANAS -->
+        <section class="section-container">
+            <h2 class="section-title scroll-anim">Las múltiples versiones de Diana</h2>
+            
+            <div class="cards-grid">
+                
+                <div class="card card-princess scroll-anim">
+                    <div class="washi-tape card-washi washi-yellow"></div>
+                    <div class="card-img-placeholder">
+                        <img src="DianaPrincesa.png" alt="Diana Princesa">
+                    </div>
+                    <h3>DIANA PRINCESA</h3>
+                    <p>Su lado detallista y elegante. Siempre procura salir lo más arreglada y con el mejor look posible para la ocasión</p>
+                </div>
+                
+                <div class="card card-academic scroll-anim">
+                    <div class="washi-tape card-washi washi-blue"></div>
+                    <div class="card-img-placeholder">
+                        <img src="DianaAcademica.png" alt="Diana Académica">
+                    </div>
+                    <h3>DIANA ACADÉMICA</h3>
+                    <p>La que tiene mil responsabilidades simultáneas y aún así intenta abarcar todo priorizando que salga lo mejor posible y más</p>
+                </div>
+
+                <div class="card card-quilla scroll-anim">
+                    <div class="washi-tape card-washi washi-pink"></div>
+                    <div class="card-img-placeholder">
+                        <img src="DianaQuilla.png" alt="Diana Quilla">
+                    </div>
+                    <h3>DIANA QUILLA</h3>
+                    <p>La esencia PUCP personificada. Si tan solo vieras su colección de ardillas y merch de cato. Ella sí procura quedarse con algún souvenir de cada experiencia</p>
+                </div>
+
+                <div class="card card-friend scroll-anim">
+                    <div class="washi-tape card-washi washi-yellow"></div>
+                    <div class="card-img-placeholder">
+                        <img src="DianaAmiga.png" alt="Diana Amiga">
+                    </div>
+                    <h3>DIANA AMIGA</h3>
+                    <p>La que valora a su familia, a sus papás y se preocupa genuinamente por las personas que quiere.</p>
+                </div>
+
+                <div class="card card-experiencias scroll-anim">
+                    <div class="washi-tape card-washi washi-blue"></div>
+                    <div class="card-img-placeholder">
+                        <img src="DianaExperiencias.png" alt="Diana Experiencias">
+                    </div>
+                    <h3>DIANA EXPERIENCIAS</h3>
+                    <p>La que le gusta vivir la real experiencia universitaria sea bailando, participando en eventos, viajando, organizando. Y se toma las reales fotasos</p>
+                </div>
+
+                <div class="card card-boss scroll-anim">
+                    <div class="washi-tape card-washi washi-pink"></div>
+                    <div class="card-img-placeholder">
+                        <img src="DianaFinalBoss.png" alt="Diana Final Boss">
+                    </div>
+                    <h3>DIANA FINAL BOSS</h3>
+                    <p>La combinación de todas: chancona, cariñosa, abrumada y brillante a la vez</p>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- PANTALLA 4: COSAS QUE NO TE DIGO TANTO -->
+        <section class="emotional-section">
+            <div class="sticker" style="top: 5%; right: 5%;">📌</div>
+            <div class="sticker" style="bottom: 10%; left: 5%;">☕</div>
+            <h2 class="section-title scroll-anim" style="color: #6d5b4b;">Cosas que quizá no te digo tanto...</h2>
+            
+            <div class="notes-container">
+                <div class="emotional-note scroll-anim">
+                    <div class="washi-tape" style="width: 50px; top: -15px; left: 20px;"></div>
+                    Hay algo que admiro mucho de ti: el cariño inmenso que le pones a los detalles y cómo te importa de verdad que las personas se sientan especiales.
+                </div>
+                
+                <div class="emotional-note scroll-anim">
+                    <div class="washi-tape washi-blue" style="width: 50px; top: -10px; right: 20px; left: auto;"></div>
+                    A veces intentas cargar con todo a la vez, porque te involucras al 100% en lo que te importa. Eso de alguna manera resulta ser parte de tu magia.
+                </div>
+                
+                <div class="emotional-note scroll-anim">
+                    <div class="washi-tape washi-pink" style="width: 60px; top: -12px; left: 50%;"></div>
+                    Admiro tu lado familiar, lo mucho que valoras el tiempo con tus papás y la calidez que transmites cuando estás con ellos.
+                </div>
+            </div>
+        </section>
+
+        <!-- PANTALLA 5: GALERÍA -->
+        <section class="section-container">
+            <h2 class="section-title scroll-anim">Pruebas de que Diana existe</h2>
+            
+            <div class="gallery-grid">
+                <!-- FOTO ACADÉMICA -->
+                <div class="polaroid scroll-anim" onclick="openModal(this)">
+                    <div class="washi-tape polaroid-tape washi-pink"></div>
+                    <img src="dianaestudiando.png" alt="Foto">
+                    <div class="polaroid-caption">Diana en modo académica.</div>
+                </div>
+                
+                <!-- FOTO PROCESAR VIDA -->
+                <div class="polaroid scroll-anim" onclick="openModal(this)">
+                    <div class="washi-tape polaroid-tape washi-blue"></div>
+                    <img src="dianaelmo.jpg" alt="Foto">
+                    <div class="polaroid-caption">Intentando procesar la vida.</div>
+                </div>
+                
+                <!-- FOTO SIENDO DIANA -->
+                <div class="polaroid scroll-anim" onclick="openModal(this)">
+                    <div class="washi-tape polaroid-tape washi-yellow"></div>
+                    <img src="dianabailando.png" alt="Foto">
+                    <div class="polaroid-caption">Diana siendo Diana.</div>
+                </div>
+                
+                <!-- FOTO CÁMARA CERCA -->
+                <div class="polaroid scroll-anim" onclick="openModal(this)">
+                    <div class="washi-tape polaroid-tape washi-pink"></div>
+                    <img src="dianaestrellas.jpg" alt="Foto">
+                    <div class="polaroid-caption">Cuando hay una cámara cerca.</div>
+                </div>
+                
+                <!-- FOTO PROTAGONISTA -->
+                <div class="polaroid scroll-anim" onclick="openModal(this)">
+                    <div class="washi-tape polaroid-tape washi-blue"></div>
+                    <img src="dianapantalla.jpg" alt="Foto">
+                    <div class="polaroid-caption">Modo protagonista.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Lightbox Modal -->
+        <div id="gallery-modal" class="modal">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <img id="modal-img" src="" alt="">
+            <div id="modal-caption" class="modal-caption"></div>
+        </div>
+
+        <!-- PANTALLA 6: QUILLA EVOLUTION -->
+        <section class="section-container" style="background: #FFF; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03);">
+            <h2 class="section-title scroll-anim">QUILLA: EVOLUTION</h2>
+            <p class="scroll-anim" style="text-align: center; font-family: var(--font-hand); font-size: 1.5rem; color: var(--text-light);">Colecciónalos todos.</p>
+            
+            <div class="evolution-container">
+                <div class="trading-card scroll-anim" style="border-color: #E6E6FA;">
+                    <div class="tc-image"><img src="quillabase.png" alt="Quilla Base"></div>
+                    <div class="tc-title">#01 Quilla Base</div>
+                    <div class="tc-desc">El inicio de todo.</div>
+                </div>
+                <div class="trading-card scroll-anim" style="border-color: #FFB6C1;">
+                    <div class="tc-image"><img src="quillaprincesa.png" alt="Quilla Princesa"></div>
+                    <div class="tc-title">#02 Quilla Princesa</div>
+                    <div class="tc-desc">Añadiendo estándares de calidad.</div>
+                </div>
+                <div class="trading-card scroll-anim" style="border-color: #87CEEB;">
+                    <div class="tc-image"><img src="quillauniversitaria.png" alt="Quilla Universitaria"></div>
+                    <div class="tc-title">#03 Quilla Universitaria</div>
+                    <div class="tc-desc">Aparecen las ojeras.</div>
+                </div>
+                <div class="trading-card scroll-anim" style="border-color: #98FB98;">
+                    <div class="tc-image"><img src="quillaacademica.png" alt="Quilla Académica"></div>
+                    <div class="tc-title">#04 Quilla Académica</div>
+                    <div class="tc-desc">Sobrecarga de pestañas.</div>
+                </div>
+                <div class="trading-card scroll-anim" style="border-color: #FFD700;">
+                    <div class="tc-image"><img src="quillafinalbos.png" alt="Diana Final Boss"></div>
+                    <div class="tc-title">#05 Diana Final Boss</div>
+                    <div class="tc-desc">Personaje definitivo.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PANTALLA 7: FINAL -->
+        <footer class="footer">
+            <!-- Estrellas generadas por JS -->
+            <div id="stars-container"></div>
+            
+            <div class="section-container" style="z-index: 2; position: relative;">
+                <p class="scroll-anim">Y después de todo este análisis...</p>
+                <p class="scroll-anim">El resultado sigue siendo el mismo.</p>
+                
+                <h2 class="scroll-anim">Feliz cumpleaños, Diana 🫶</h2>
+                
+                <p class="scroll-anim" style="font-size: 1.5rem;">Espero que este nuevo año te traiga muchas cosas bonitas, pero sobre todo momentos que no tengas que planear, corregir ni hacer perfectos para disfrutarlos.</p>
+                <p class="scroll-anim" style="font-size: 1.8rem; font-weight: bold;">Solo disfrútalos.</p>
+                
+                <div class="final-photo scroll-anim">
+                    <img src="13.png" alt="Diana Final">
+                </div>
+                
+                <div class="signature scroll-anim">— Meli</div>
+                
+                <!-- EASTER EGG oculto -->
+                <button class="secret-btn" onclick="alert('¡BOMBA DE CHACOTA ACTIVADA! 💥 [INSERTAR CHISTE AQUÍ]')"></button>
+            </div>
+        </footer>
+
+    </div>
+
+    <script>
+        // === LÓGICA DE LA PANTALLA DE CARGA ===
+        const lines = document.querySelectorAll('.terminal-line');
+        const enterBtn = document.getElementById('enter-btn');
+        const loadingScreen = document.getElementById('loading-screen');
+        const mainContent = document.getElementById('main-content');
+        const musicBtn = document.getElementById('music-btn');
+        const bgMusic = document.getElementById('bg-music');
+        let isPlaying = false;
+
+        // Mostrar líneas con tiempos reducidos
+        lines.forEach(line => {
+            setTimeout(() => {
+                line.style.opacity = '1';
+                line.style.transform = `rotate(${Math.random() * 4 - 2}deg) scale(1.05)`;
+                setTimeout(() => line.style.transform = `rotate(${Math.random() * 4 - 2}deg) scale(1)`, 200);
+            }, parseInt(line.dataset.delay));
+        });
+
+        setTimeout(() => {
+            enterBtn.classList.add('visible');
+        }, 6000);
+
+        // Click en el botón para entrar
+        enterBtn.addEventListener('click', () => {
+            loadingScreen.style.opacity = '0';
+            
+            // Intenta reproducir la música al entrar
+            bgMusic.play().then(() => {
+                isPlaying = true;
+                musicBtn.innerHTML = '⏸️';
+                musicBtn.style.background = 'var(--color-sage)';
+            }).catch(e => {
+                console.log("El navegador requiere interacción manual para reproducir el audio.");
+            });
+
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+                mainContent.style.display = 'block';
+                void mainContent.offsetWidth;
+                mainContent.style.opacity = '1';
+                createStars();
+            }, 1000);
+        });
+
+        // === CONTROL DE MÚSICA ===
+        musicBtn.addEventListener('click', () => {
+            if (isPlaying) {
+                bgMusic.pause();
+                musicBtn.innerHTML = '🎵';
+                musicBtn.style.background = 'var(--color-coral)';
+            } else {
+                bgMusic.play();
+                musicBtn.innerHTML = '⏸️';
+                musicBtn.style.background = 'var(--color-sage)';
+            }
+            isPlaying = !isPlaying;
+        });
+
+        // === ANIMACIONES AL HACER SCROLL ===
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.15
+        };
+
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fade-in');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.scroll-anim, .card, .emotional-note, .polaroid, .trading-card').forEach(el => {
+            observer.observe(el);
+        });
+
+        // === LÓGICA DE LA GALERÍA (LIGHTBOX) ===
+        const modal = document.getElementById('gallery-modal');
+        const modalImg = document.getElementById('modal-img');
+        const modalCaption = document.getElementById('modal-caption');
+
+        function openModal(element) {
+            const img = element.querySelector('img');
+            const caption = element.querySelector('.polaroid-caption').innerText;
+            modalImg.src = img.src;
+            modalCaption.innerText = caption;
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+            modalImg.src = '';
+        }
+
+        modal.addEventListener('click', function(e) {
+            if(e.target === modal) closeModal();
+        });
+
+        // === EASTER EGG (Click en portada) ===
+        let heroClicks = 0;
+        const heroImg = document.getElementById('hero-img');
+        
+        heroImg.addEventListener('click', () => {
+            heroClicks++;
+            heroImg.style.transform = `rotate(${Math.random() * 10 - 5}deg) scale(1.1)`;
+            setTimeout(() => heroImg.style.transform = '', 200);
+            
+            if (heroClicks === 5) {
+                alert("¡Felicidades! Encontraste a la Quilla escondida. 🐿️✨");
+                heroClicks = 0;
+            }
+        });
+
+        // === EFECTO DE ESTRELLAS EN EL FOOTER ===
+        function createStars() {
+            const container = document.getElementById('stars-container');
+            for(let i = 0; i < 30; i++) {
+                let star = document.createElement('div');
+                star.className = 'star';
+                star.innerHTML = ['✨', '💖', '🌟', '🌸'][Math.floor(Math.random() * 4)];
+                star.style.left = Math.random() * 100 + '%';
+                star.style.bottom = '-50px';
+                star.style.animationDuration = (Math.random() * 3 + 3) + 's';
+                star.style.animationDelay = (Math.random() * 5) + 's';
+                container.appendChild(star);
+            }
+        }
+    </script>
+</body>
+</html>
